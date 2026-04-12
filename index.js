@@ -11,34 +11,43 @@ app.use(express.json());
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // 465 ke liye true hota hai
+    service: 'gmail', // Direct service use karne se configuration asaan ho jati hai
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        // Ye line sabse zaroori hai, ye unauthorized connection errors ko fix karti hai
-        rejectUnauthorized: false 
+        // Ye sabse zaroori hai Render aur Gmail ke connection ke liye
+        rejectUnauthorized: false
     }
 });
 
+// Verify connection configuration (Isse logs mein pata chal jayega agar error hai)
+transporter.verify(function (error, success) {
+    if (error) {
+        console.log("Transporter error: ", error);
+    } else {
+        console.log("Server is ready to take our messages");
+    }
+});
 // Main Route for Form Submission
 app.post('/send-mail', (req, res) => {
     const { name, email, phone, message } = req.body;
 
     // 1. Notification Mail to YOU
-    const adminMail = {
-        from: `"${name}" <${email}>`, // Proper sender format
-        to: process.env.EMAIL_USER,
-        subject: `🚀 New Portfolio Inquiry from ${name}`,
-        text: `You have received a new message:\n\n` +
-              `Name: ${name}\n` +
-              `Email: ${email}\n` +
-              `Phone: ${phone}\n\n` +
-              `Message:\n${message}`
-    };
+const adminMail = {
+    // Gmail sirf aapka apna email hi "from" mein allow karta hai
+    from: process.env.EMAIL_USER, 
+    to: process.env.EMAIL_USER,
+    // User ka email aap "Reply-To" mein daal sakte ho
+    replyTo: email, 
+    subject: `🚀 New Portfolio Inquiry from ${name}`,
+    text: `You have received a new message:\n\n` +
+          `Name: ${name}\n` +
+          `Email: ${email}\n` +
+          `Phone: ${phone}\n\n` +
+          `Message:\n${message}`
+};
 
     // 2. Professional Auto-Reply to the USER
     const autoReply = {
