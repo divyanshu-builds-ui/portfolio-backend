@@ -11,13 +11,16 @@ app.use(express.json());
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // 465 ke liye true hota hai
     auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS  
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
+        // Ye line sabse zaroori hai, ye unauthorized connection errors ko fix karti hai
+        rejectUnauthorized: false 
     }
 });
 
