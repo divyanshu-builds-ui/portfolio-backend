@@ -11,18 +11,16 @@ app.use(express.json());
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-    // smtp.gmail.com ka direct IPv4 address use kar rahe hain
-    host: '74.125.142.108', 
-    port: 465,
-    secure: true,
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // 587 ke liye false hona zaroori hai
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        // Kyunki hum direct IP use kar rahe hain, servername dena zaroori hai
-        servername: 'smtp.gmail.com',
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2' // Security ke liye extra layer
     }
 });
 
