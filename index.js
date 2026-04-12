@@ -11,28 +11,27 @@ app.use(express.json());
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    // smtp.gmail.com ka direct IPv4 address use kar rahe hain
+    host: '74.125.142.108', 
     port: 465,
-    secure: true, 
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    // YE SARE OPTIONS NETWORKING ERROR FIX KARNE KE LIYE HAIN
-    options: {
-        family: 4 // Ye force karega ki sirf IPv4 use ho (IPv6 ignore ho jayega)
-    },
     tls: {
-        rejectUnauthorized: false 
+        // Kyunki hum direct IP use kar rahe hain, servername dena zaroori hai
+        servername: 'smtp.gmail.com',
+        rejectUnauthorized: false
     }
 });
 
 // Verify connection
 transporter.verify(function (error, success) {
     if (error) {
-        console.log("Transporter error (Check IPv4): ", error);
+        console.log("Transporter error: ", error);
     } else {
-        console.log("✅ SUCCESS: Server is ready to take our messages!");
+        console.log("✅ FINALLY: Server is ready!");
     }
 });
 
