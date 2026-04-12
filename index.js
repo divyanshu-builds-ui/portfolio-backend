@@ -11,13 +11,14 @@ app.use(express.json());
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Direct service use karne se configuration asaan ho jati hai
+    // 'host' ki jagah 'service' use karne se Nodemailer khud sahi IPv4 utha leta hai
+    service: 'gmail', 
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        // Ye sabse zaroori hai Render aur Gmail ke connection ke liye
+        // Render ke networking issues se bachne ke liye ye mandatory hai
         rejectUnauthorized: false
     }
 });
