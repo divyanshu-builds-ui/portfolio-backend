@@ -40,7 +40,7 @@ app.post('/send-mail', async (req, res) => {
 
     // 2. USER KO JO JAYEGA (Professional Auto-Reply)
     const autoReply = {
-        from: `"D Kumar | Portfolio" <${process.env.EMAIL_USER}>`, // Professional Sender Name
+        from: `"DG. | Portfolio" <${process.env.EMAIL_USER}>`, // Professional Sender Name
         to: email,
         subject: `Confirmation: We've received your message, ${name}!`,
         html: `
@@ -50,13 +50,13 @@ app.post('/send-mail', async (req, res) => {
                 </div>
                 <div style="padding: 20px; color: #333; line-height: 1.6;">
                     <p>Hi <b>${name}</b>,</p>
-                    <p>Thank you for reaching out through my portfolio website. This is an automated confirmation to let you know that your message has been safely delivered to my server.</p>
+                    <p>Thank you for reaching out through my portfolio website. I've received your message and will get back to you as soon as I can.</p>
                     <p>I have received your inquiry and will review it shortly. You can expect a response from me within the next 24-48 hours.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                     <p style="font-size: 0.9em; color: #666;"><b>Your Message Preview:</b><br><i>"${message}"</i></p>
                 </div>
                 <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 0.8em; color: #888;">
-                    © 2026 D Kumar Portfolio. All rights reserved.
+                    © 2026 DG. Portfolio. All rights reserved.
                 </div>
             </div>
         `
