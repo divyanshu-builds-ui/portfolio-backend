@@ -4,101 +4,76 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-// Middlewares
-app.use(cors()); 
-app.use(express.json()); 
+app.get("/", (req, res) => res.send("Professional Mail Server is Live!"));
 
-// Email Transporter Setup
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // 587 ke liye false hona zaroori hai
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false,
-        minVersion: 'TLSv1.2' // Security ke liye extra layer
-    }
-});
-
-// Verify connection
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log("Transporter error: ", error);
-    } else {
-        console.log("✅ FINALLY: Server is ready!");
-    }
-});
-
-// Verify connection configuration (Isse logs mein pata chal jayega agar error hai)
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log("Transporter error: ", error);
-    } else {
-        console.log("Server is ready to take our messages");
-    }
-});
-// Main Route for Form Submission
-app.post('/send-mail', (req, res) => {
+app.post('/send-mail', async (req, res) => {
     const { name, email, phone, message } = req.body;
 
-    // 1. Notification Mail to YOU
-const adminMail = {
-    // Gmail sirf aapka apna email hi "from" mein allow karta hai
-    from: process.env.EMAIL_USER, 
-    to: process.env.EMAIL_USER,
-    // User ka email aap "Reply-To" mein daal sakte ho
-    replyTo: email, 
-    subject: `🚀 New Portfolio Inquiry from ${name}`,
-    text: `You have received a new message:\n\n` +
-          `Name: ${name}\n` +
-          `Email: ${email}\n` +
-          `Phone: ${phone}\n\n` +
-          `Message:\n${message}`
-};
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
 
-    // 2. Professional Auto-Reply to the USER
-    const autoReply = {
-        from: `"Support" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: `Thank you for reaching out, ${name}!`,
-        text: `Hello ${name},\n\nThank you for contacting me through my portfolio. I have received your message regarding: \n\n"${message}"\n\nI will review your inquiry and get back to you as soon as possible.\n\nBest Regards,\n[Your Name]`
+    // 1. AAPKO JO MAIL MILEGA (Admin Notification)
+    const adminMail = {
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER,
+        replyTo: email,
+        subject: `🚀 New Inquiry: ${name}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
+                <h2 style="color: #333;">New Portfolio Message</h2>
+                <p><b>Name:</b> ${name}</p>
+                <p><b>Email:</b> ${email}</p>
+                <p><b>Phone:</b> ${phone}</p>
+                <p><b>Message:</b></p>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">${message}</div>
+            </div>
+        `
     };
 
-    // Sending the Admin Email first
-    transporter.sendMail(adminMail, (error, info) => {
-        if (error) {
-            console.log("Error occurred:", error.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: "Internal Server Error. Email not sent." 
-            });
-        }
+    // 2. USER KO JO JAYEGA (Professional Auto-Reply)
+    const autoReply = {
+        from: `"D Kumar | Portfolio" <${process.env.EMAIL_USER}>`, // Professional Sender Name
+        to: email,
+        subject: `Confirmation: We've received your message, ${name}!`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+                <div style="background: #2563eb; color: white; padding: 20px; text-align: center;">
+                    <h1>Thank You!</h1>
+                </div>
+                <div style="padding: 20px; color: #333; line-height: 1.6;">
+                    <p>Hi <b>${name}</b>,</p>
+                    <p>Thank you for reaching out through my portfolio website. This is an automated confirmation to let you know that your message has been safely delivered to my server.</p>
+                    <p>I have received your inquiry and will review it shortly. You can expect a response from me within the next 24-48 hours.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 0.9em; color: #666;"><b>Your Message Preview:</b><br><i>"${message}"</i></p>
+                </div>
+                <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 0.8em; color: #888;">
+                    © 2026 D Kumar Portfolio. All rights reserved.
+                </div>
+            </div>
+        `
+    };
 
-        console.log("Admin notification sent: " + info.response);
-
-        // Send Auto-Reply in the background (User doesn't have to wait for this)
-        transporter.sendMail(autoReply, (err, info) => {
-            if (err) console.log("Auto-reply failed:", err.message);
-            else console.log("Auto-reply sent to user.");
-        });
-
-        // Send success response to Frontend
-        res.status(200).json({ 
-            success: true, 
-            message: "Success! Message sent and auto-reply triggered." 
-        });
-    });
+    try {
+        // Dono mails bhej rahe hain
+        await transporter.sendMail(adminMail);
+        await transporter.sendMail(autoReply);
+        
+        res.status(200).json({ success: true, message: "Emails sent successfully!" });
+    } catch (error) {
+        console.error("Nodemailer Error:", error);
+        res.status(500).json({ success: false, message: "Server couldn't send the email." });
+    }
 });
 
-// Port Configuration
+module.exports = app;
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`-------------------------------------------`);
-    console.log(`🚀 Server is running on port: ${PORT}`);
-    console.log(`📧 Connected Email: ${process.env.EMAIL_USER}`);
-    console.log(`-------------------------------------------`);
-});
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
